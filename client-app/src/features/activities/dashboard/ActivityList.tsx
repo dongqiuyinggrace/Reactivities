@@ -1,24 +1,22 @@
 import React from 'react';
-import { Button, Image, Item, Label } from 'semantic-ui-react';
+import { Item, Segment } from 'semantic-ui-react';
+import { IActivity } from './../../../app/models/activity';
+import ActivityItem from './ActivityItem';
 
-const ActivityList = () => {
+interface IProps {
+  activities: IActivity[];
+  selectActivity: (id: string) => void;
+}
+
+const ActivityList: React.FC<IProps> = ({ activities, selectActivity }) => {
   return (
-    <Item.Group>
-      <Item>
-        <Item.Content>
-          <Item.Header as='a'>Title</Item.Header>
-          <Item.Meta>Date</Item.Meta>
-          <Item.Description>
-            <div>Description</div>
-            <div>City, Venue</div>
-          </Item.Description>
-          <Item.Extra>
-              <Button floated='right' content='View' color='blue'/>
-              <Label content='Category'/>
-          </Item.Extra>
-        </Item.Content>
-      </Item>
-    </Item.Group>
+    <Segment clearing>
+      <Item.Group divided>
+        {activities.map((activity) => (
+          <ActivityItem key={activity.id} activity={activity} selectActivity={selectActivity}/>
+        ))}
+      </Item.Group>
+    </Segment>
   );
 };
 
