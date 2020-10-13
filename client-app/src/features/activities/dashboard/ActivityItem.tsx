@@ -1,16 +1,18 @@
-import React, { SyntheticEvent } from 'react';
+import React, { SyntheticEvent, useContext } from 'react';
 import { Button, Item, Label } from 'semantic-ui-react';
 import { IActivity } from './../../../app/models/activity';
+import { observer } from 'mobx-react-lite';
+import ActivityStore from '../../../app/stores/activityStore';
 
 interface IProps {
   activity: IActivity;
-  selectActivity: (id: string) => void;
-  deleteActivity: (event: SyntheticEvent<HTMLButtonElement> ,id: string) => void;
-  submitting: boolean;
-  target: string;
 }
 
-const ActivityItem: React.FC<IProps> = ({ activity, selectActivity, deleteActivity, submitting, target }) => {
+const ActivityItem: React.FC<IProps> = ({ activity }) => {
+
+  const activityStore = useContext(ActivityStore);
+  const {selectActivity, submitting, deleteActivity, target} = activityStore;
+
   return (
     <Item>
       <Item.Content>
@@ -39,4 +41,4 @@ const ActivityItem: React.FC<IProps> = ({ activity, selectActivity, deleteActivi
   );
 };
 
-export default ActivityItem;
+export default observer(ActivityItem);
