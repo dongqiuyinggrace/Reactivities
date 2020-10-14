@@ -5,15 +5,13 @@ import {v4 as uuid} from 'uuid';
 import { observer } from 'mobx-react-lite';
 import ActivityStore from '../../../app/stores/activityStore';
 
-interface IProps {
-    createActivity: (activity: IActivity) => void;
-}
-
-const ActivityForm: React.FC<IProps> = ({createActivity}) => {
+const ActivityForm = () => {
     const activityStore = useContext(ActivityStore);
+    const {createActivity, selectedActivity, submitting, setEditMode} = activityStore;
+
     const initializeForm = () => {
-        if (activityStore.selectedActivity) {
-            return activityStore.selectedActivity;
+        if (selectedActivity) {
+            return selectedActivity;
         } else {
             return {
                 id: '',
@@ -55,8 +53,8 @@ const ActivityForm: React.FC<IProps> = ({createActivity}) => {
                 <Form.Input name='date' type='datetime-local' placeholder='Date' value={activity.date} onChange={handleChange}/>
                 <Form.Input name='city' placeholder='City' value={activity.city} onChange={handleChange}/>
                 <Form.Input name='venue' placeholder='Venue' value={activity.venue} onChange={handleChange}/>
-                <Button loading={activityStore.submitting} positive floated='right' type='submit' content='Submit'/>
-                <Button floated='right' type='button' content='Cancel' onClick={() => activityStore.setEditMode(false)}/>
+                <Button loading={submitting} positive floated='right' type='submit' content='Submit'/>
+                <Button floated='right' type='button' content='Cancel' onClick={() => setEditMode(false)}/>
             </Form>
         </Segment>
     )

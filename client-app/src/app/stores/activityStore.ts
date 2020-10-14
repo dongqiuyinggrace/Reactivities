@@ -1,9 +1,12 @@
-import { action, computed, observable } from 'mobx';
+import { action, computed, observable, configure, runInAction } from 'mobx';
 import { createContext, SyntheticEvent } from 'react';
 import agent from '../api/agent';
 import { IActivity } from './../models/activity';
 
+configure({ enforceActions: 'always' });
+
 class ActivityStore {
+  @observable activityRegistry = new Map();
   @observable activities: IActivity[] = [];
   @observable selectedActivity: IActivity | undefined;
   @observable loadingInitial = false;
@@ -12,26 +15,32 @@ class ActivityStore {
   @observable target = '';
 
   @computed get activitiesByDate() {
-    return this.activities.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+    return Array.from(this.activityRegistry.values()).sort(
+      (a, b) => Date.parse(a.date) - Date.parse(b.date)
+    );
   }
 
   @action loadActivities = async () => {
     this.loadingInitial = true;
     try {
       const activities = await agent.Activities.list();
-      activities.forEach((activity) => {
-        activity.date = activity.date.split('.')[0];
-        this.activities.push(activity);
+      runInAction('load activities', () => {
+        activities.forEach((activity) => {
+          activity.date = activity.date.split('.')[0];
+          this.activityRegistry.set(activity.id, activity);
+        });
+        this.loadingInitial = false;
       });
-      this.loadingInitial = false;
     } catch (error) {
+      runInAction('load activities error', () => {
+        this.loadingInitial = false;
+      });
       console.log(error);
-      this.loadingInitial = false;
     }
   };
 
   @action selectActivity = (id: string) => {
-    this.selectedActivity = this.activities.find((a) => a.id === id);
+    this.selectedActivity = this.activityRegistry.get(id);
     this.editMode = false;
   };
 
@@ -44,51 +53,66 @@ class ActivityStore {
     this.submitting = true;
     try {
       await agent.Activities.create(activity);
-      this.activities.push(activity);
-      this.selectedActivity = activity;
-      this.editMode = false;
-      this.submitting = false;
-    } catch(error) {
+      runInAction('create activity', () => {
+        this.activityRegistry.set(activity.id, activity);
+        this.selectedActivity = activity;
+        this.editMode = false;
+        this.submitting = false;
+      });
+    } catch (error) {
+      runInAction('load activity error', () => {
+        this.submitting = false;
+      });
       console.log(error);
-      this.submitting = false;
     }
   };
 
-  @action editActivity = (activity: IActivity) => {
+  @action editActivity = async (activity: IActivity) => {
     this.submitting = true;
-    agent.Activities.update(activity)
-      .then(() => {
-        this.activities = [
-          ...this.activities.filter((a) => a.id !== activity.id),
-          activity,
-        ];
+    try {
+      await agent.Activities.update(activity);
+      runInAction('edit activity', () => {
+        this.activityRegistry.set(activity.id, activity);
         this.selectedActivity = activity;
         this.editMode = false;
-      })
-      .then(() => {
         this.submitting = false;
       });
+    } catch (error) {
+      runInAction('edit activity error', () => {
+        this.submitting = false;
+      });
+      console.log(error);
+    }
   };
 
-  @action deleteActivity = (
+  @action deleteActivity = async (
     event: SyntheticEvent<HTMLButtonElement>,
     id: string
   ) => {
     this.target = event.currentTarget.name;
     this.submitting = true;
-    agent.Activities.delete(id)
-      .then(() => {
-        this.activities = [
-          ...this.activities.filter((activity) => activity.id !== id),
-        ];
-      })
-      .then(() => {
+    try {
+      await agent.Activities.delete(id);
+      runInAction('delete activity', () => {
+        this.activityRegistry.delete(id);
         this.submitting = false;
+        this.target = '';
       });
+    } catch (error) {
+      runInAction('delete activity error', () => {
+        this.submitting = false;
+        this.target = '';
+      });
+      console.log(error);
+    }
   };
 
   @action setEditMode = (mode: boolean) => {
     this.editMode = mode;
+  };
+
+  @action cancelSelectedActivity = () => {
+    this.selectedActivity = undefined;
   };
 }
 
