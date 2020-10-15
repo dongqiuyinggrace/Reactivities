@@ -1,16 +1,29 @@
-import React from 'react'
-import { useHistory } from 'react-router-dom'
-import { Button } from 'semantic-ui-react'
+import React from 'react';
+import { Link, useHistory } from 'react-router-dom';
+import { Button, Segment, Container, Header, Image } from 'semantic-ui-react';
 
 const HomePage = () => {
-    const history = useHistory();
+  const history = useHistory();
 
-    return (
-        <div>
-            <h1>Home Page</h1>
-            <Button onClick={() => history.push('/activities')} positive content='Go to activities'/>
-        </div>
-    )
-}
+  return (
+    <Segment inverted textAlign='center' vertical className='masthead'>
+      <Container text>
+        <Header as='h1' inverted>
+          <Image
+            size='massive'
+            src='/assets/logo.png'
+            alt='logo'
+            style={{ marginBottom: 12 }}
+          />
+          Reactivities
+        </Header>
+        <Header as='h2' inverted content='Welcome to Reactivities' />
+        <Button as={Link} to='/activities' size='huge' inverted>
+          Take me to the activities!
+        </Button>
+      </Container>
+    </Segment>
+  );
+};
 
-export default HomePage
+export default HomePage;
