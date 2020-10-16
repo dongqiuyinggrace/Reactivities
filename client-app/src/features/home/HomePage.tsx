@@ -1,9 +1,8 @@
 import React from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button, Segment, Container, Header, Image } from 'semantic-ui-react';
 
 const HomePage = () => {
-  const history = useHistory();
 
   return (
     <Segment inverted textAlign='center' vertical className='masthead'>

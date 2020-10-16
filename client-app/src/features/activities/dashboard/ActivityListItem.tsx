@@ -1,10 +1,8 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Item, Button, Segment, Icon } from 'semantic-ui-react';
 import { IActivity } from './../../../app/models/activity';
-import ActivityStore from '../../../app/stores/activityStore';
 import { observer } from 'mobx-react-lite';
-import { clear } from 'console';
 
 interface IProps {
   activity: IActivity;

@@ -45,12 +45,11 @@ class ActivityStore {
         });
         this.loadingInitial = false;
       });
-      console.log(this.groupActivities(activities));
     } catch (error) {
       runInAction('load activities error', () => {
         this.loadingInitial = false;
       });
-      console.log(error);
+      console.log(error)
     }
   };
 

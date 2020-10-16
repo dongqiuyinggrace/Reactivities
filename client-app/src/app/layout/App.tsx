@@ -6,11 +6,14 @@ import { Route, Switch, useLocation } from 'react-router-dom';
 import ActivityForm from '../../features/activities/forms/ActivityForm';
 import HomePage from '../../features/home/HomePage';
 import ActivityDetails from '../../features/activities/details/ActivityDetails';
+import NotFound from './NotFound';
+import { ToastContainer } from 'react-toastify';
 
 const App = () => {
   const location = useLocation();
   return (
     <>
+    <ToastContainer position='bottom-right'/>
       <Route exact path='/' component={HomePage} />
       <Route
         path='/(.+)'
@@ -28,6 +31,9 @@ const App = () => {
                 <Route
                   path={['/createActivity', '/manage/:id']}
                   component={ActivityForm}
+                />
+                <Route
+                  component={NotFound}
                 />
               </Switch>
             </Container>
