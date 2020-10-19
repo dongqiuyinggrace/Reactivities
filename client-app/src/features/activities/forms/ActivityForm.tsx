@@ -1,18 +1,38 @@
-import React, { FormEvent, useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Button, Form, Grid, Segment } from 'semantic-ui-react';
 import { v4 as uuid } from 'uuid';
 import { observer } from 'mobx-react-lite';
 import { RouteComponentProps } from 'react-router-dom';
 import { Form as FinalForm, Field } from 'react-final-form';
 import ActivityStore from '../../../app/stores/activityStore';
-import { IActivity, IActivityFormValues } from './../../../app/models/activity';
 import TextInput from './../../../app/common/form/TextInput';
 import TextAreaInput from './../../../app/common/form/TextAreaInput';
 import SelectInput from './../../../app/common/form/SelectInput';
 import { category } from './../../../app/common/options/categoryOptions';
 import DateInput from './../../../app/common/form/DateInput';
-import { unescapeLeadingUnderscores } from 'typescript';
 import { CombineDateAndTime } from './../../../app/common/util/util';
+import { ActivityFormValues } from '../../../app/models/activity';
+import {
+  combineValidators,
+  composeValidators,
+  hasLengthGreaterThan,
+  isRequired,
+} from 'revalidate';
+
+const validate = combineValidators({
+  title: isRequired({ message: 'The activity title is required' }),
+  category: isRequired({ message: 'The activity category is required' }),
+  description: composeValidators(
+    isRequired('Description is required'),
+    hasLengthGreaterThan(4)({
+      message: 'Description needs to be at least five characters',
+    })
+  )(),
+  city: isRequired('City'),
+  venue: isRequired('Venue'),
+  date: isRequired('Date'),
+  time: isRequired('Time'),
+});
 
 interface DetailParams {
   id: string;
@@ -25,69 +45,40 @@ const ActivityForm: React.FC<RouteComponentProps<DetailParams>> = ({
   const activityStore = useContext(ActivityStore);
   const {
     createActivity,
-    activity: initialFormState,
     submitting,
     loadActivity,
-    clearActivity,
+    editActivity,
   } = activityStore;
 
-  const [activity, setActivity] = useState<IActivityFormValues>({
-    id: undefined,
-    title: '',
-    category: '',
-    description: '',
-    date: undefined,
-    time: undefined,
-    city: '',
-    venue: '',
-  });
+  const [activity, setActivity] = useState(new ActivityFormValues());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (match.params.id && !activity.id) {
-      loadActivity(match.params.id).then(
-        () => initialFormState && setActivity(initialFormState)
-      );
+    if (match.params.id) {
+      console.log(match.params.id);
+      setLoading(true);
+      loadActivity(match.params.id)
+        .then(
+          (activity) =>
+            activity && setActivity(new ActivityFormValues(activity))
+        )
+        .finally(() => setLoading(false));
     }
-
-    return () => {
-      clearActivity();
-    };
-  }, [
-    loadActivity,
-    match.params.id,
-    clearActivity,
-    initialFormState,
-    activity.id,
-  ]);
-
-  const handleChange = (
-    event: FormEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = event.currentTarget;
-    setActivity({ ...activity, [name]: value });
-  };
-
-  // const handleSubmit = () => {
-  //   if (activity.id) {
-  //     let newActivity = {
-  //       ...activity,
-  //       id: uuid(),
-  //     };
-  //     createActivity(newActivity).then(() =>
-  //       history.push(`/activities/${activity.id}`)
-  //     );
-  //   } else {
-  //     activityStore
-  //       .editActivity(activity)
-  //       .then(() => history.push(`/activities/${activity.id}`));
-  //   }
-  // };
+  }, [loadActivity, match.params.id]);
 
   const handleFinalFormSubmit = (values: any) => {
     const dateAndTime = CombineDateAndTime(values.date, values.time);
-    const {date, time, ...activity} = values;
+    const { date, time, ...activity } = values;
     activity.date = dateAndTime;
-    console.log(activity);
+    if (!activity.id) {
+      let newActivity = {
+        ...activity,
+        id: uuid(),
+      };
+      createActivity(newActivity);
+    } else {
+      editActivity(activity);
+    }
   };
 
   return (
@@ -95,9 +86,11 @@ const ActivityForm: React.FC<RouteComponentProps<DetailParams>> = ({
       <Grid.Column width={10}>
         <Segment clearing>
           <FinalForm
+            initialValues={activity}
+            validate={validate}
             onSubmit={handleFinalFormSubmit}
-            render={({ handleSubmit }) => (
-              <Form onSubmit={handleSubmit}>
+            render={({ handleSubmit, invalid, pristine }) => (
+              <Form onSubmit={handleSubmit} loading={loading}>
                 <Field
                   name='title'
                   placeholder='Title'
@@ -153,12 +146,18 @@ const ActivityForm: React.FC<RouteComponentProps<DetailParams>> = ({
                   floated='right'
                   type='submit'
                   content='Submit'
+                  disabled={loading || invalid || pristine}
                 />
                 <Button
                   floated='right'
                   type='button'
                   content='Cancel'
-                  onClick={() => history.push(`/activities/${activity.id}`)}
+                  disabled={loading}
+                  onClick={
+                    activity.id
+                      ? () => history.push(`/activities/${activity.id}`)
+                      : () => history.push('/activities')
+                  }
                 />
               </Form>
             )}
