@@ -4,7 +4,6 @@ import { v4 as uuid } from 'uuid';
 import { observer } from 'mobx-react-lite';
 import { RouteComponentProps } from 'react-router-dom';
 import { Form as FinalForm, Field } from 'react-final-form';
-import ActivityStore from '../../../app/stores/activityStore';
 import TextInput from './../../../app/common/form/TextInput';
 import TextAreaInput from './../../../app/common/form/TextAreaInput';
 import SelectInput from './../../../app/common/form/SelectInput';
@@ -18,6 +17,7 @@ import {
   hasLengthGreaterThan,
   isRequired,
 } from 'revalidate';
+import { RootStoreContext } from '../../../app/stores/rootStore';
 
 const validate = combineValidators({
   title: isRequired({ message: 'The activity title is required' }),
@@ -42,20 +42,19 @@ const ActivityForm: React.FC<RouteComponentProps<DetailParams>> = ({
   match,
   history,
 }) => {
-  const activityStore = useContext(ActivityStore);
+  const rootStore = useContext(RootStoreContext);
   const {
     createActivity,
     submitting,
     loadActivity,
     editActivity,
-  } = activityStore;
+  } = rootStore.activityStore;
 
   const [activity, setActivity] = useState(new ActivityFormValues());
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (match.params.id) {
-      console.log(match.params.id);
       setLoading(true);
       loadActivity(match.params.id)
         .then(

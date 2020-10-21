@@ -1,19 +1,43 @@
-import React from 'react';
+import React, { Fragment, useContext, useEffect } from 'react';
 import NavBar from '../../features/nav/NavBar';
 import { Container } from 'semantic-ui-react';
 import ActivityDashboard from '../../features/activities/dashboard/ActivityDashboard';
-import { Route, Switch, useLocation } from 'react-router-dom';
+import {
+  Route,
+  Switch,
+  useLocation,
+} from 'react-router-dom';
 import ActivityForm from '../../features/activities/forms/ActivityForm';
 import HomePage from '../../features/home/HomePage';
 import ActivityDetails from '../../features/activities/details/ActivityDetails';
 import NotFound from './NotFound';
 import { ToastContainer } from 'react-toastify';
+import LoginForm from './../../features/user/LoginForm';
+import { RootStoreContext } from '../stores/rootStore';
+import LoadingComponent from './LoadingComponent';
+import { observer } from 'mobx-react-lite';
+import ModalContainer from '../common/modals/ModalContainer';
 
 const App = () => {
   const location = useLocation();
+  const rootStore = useContext(RootStoreContext);
+  const { setAppLoaded, token, appLoaded } = rootStore.commonStore;
+  const {getCurrentUser} = rootStore.userStore;
+
+  useEffect(() => {
+    if(token) {
+      getCurrentUser().finally(() => setAppLoaded());
+    } else {
+      setAppLoaded();
+    }
+  }, [token, getCurrentUser, setAppLoaded]);
+
+  if (!appLoaded) return <LoadingComponent inverted content='Loading App...'/>
+
   return (
-    <>
-    <ToastContainer position='bottom-right'/>
+    <Fragment>
+      <ModalContainer />
+      <ToastContainer position='bottom-right' />
       <Route exact path='/' component={HomePage} />
       <Route
         path='/(.+)'
@@ -32,16 +56,15 @@ const App = () => {
                   path={['/createActivity', '/manage/:id']}
                   component={ActivityForm}
                 />
-                <Route
-                  component={NotFound}
-                />
+                <Route path='/login' component={LoginForm} />
+                <Route component={NotFound} />
               </Switch>
             </Container>
           </>
         )}
       />
-    </>
+    </Fragment>
   );
 };
 
-export default App;
+export default observer(App);
