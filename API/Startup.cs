@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using API.Middleware;
 using Application.Activities;
 using Application.Interfaces;
+using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
 using Infrastructure;
@@ -51,6 +52,7 @@ namespace API
                     });
             services.AddDbContext<DataContext>(options => 
             {
+                options.UseLazyLoadingProxies();
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
             services.AddCors(config => 
@@ -61,6 +63,7 @@ namespace API
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);
+            services.AddAutoMapper(typeof(List.Handler).Assembly);
 
             var builder = services.AddIdentityCore<AppUser>();
             var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
@@ -79,6 +82,16 @@ namespace API
                         ValidateIssuer = false
                     };
                 });
+
+            services.AddAuthorization(config => 
+            {
+                config.AddPolicy("IsActivityHost", policy => 
+                {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
+
             services.AddScoped<IJwtGenerator, JwtGenerator>();
             services.AddScoped<IUserAccessor, UserAccessor>();
         }
