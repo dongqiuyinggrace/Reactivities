@@ -39,7 +39,7 @@ const ActivityDetailedSidebar: React.FC<IProps> = ({ attendees }) => {
                 <Image size='tiny' src={'/assets/user.png'} />
                 <Item.Content verticalAlign='middle'>
                   <Item.Header as='h3'>
-                    <Link to={`#`}>{attendee.displayName}</Link>
+                    <Link to={`/profile/${attendee.userName}`}>{attendee.displayName}</Link>
                   </Item.Header>
                   <Item.Extra style={{ color: 'orange' }}>Following</Item.Extra>
                 </Item.Content>

@@ -4,7 +4,7 @@ import { IActivity } from './../../../app/models/activity';
 import { observer } from 'mobx-react-lite';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { RootStore, RootStoreContext } from './../../../app/stores/rootStore';
+import { RootStoreContext } from './../../../app/stores/rootStore';
 
 const activityImageStyle = {
   filter: 'brightness(30%)',
@@ -47,7 +47,7 @@ const ActivityDetailedHead: React.FC<IProps> = ({ activity }) => {
                 />
                 <p>{format(activity.date, 'eeee do MMMM')}</p>
                 <p>
-                  Hosted by <strong>{host.displayName}</strong>
+                  Hosted by <Link to={`/profile/${host.userName}`}>{host.displayName}</Link>
                 </p>
               </Item.Content>
             </Item>
