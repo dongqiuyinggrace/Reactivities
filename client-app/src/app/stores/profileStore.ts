@@ -1,8 +1,9 @@
 import { action, computed, observable, runInAction } from 'mobx';
 import agent from '../api/agent';
-import { IPhoto, IProfile } from './../models/profile';
+import { IPhoto, IProfile, IEditProfile } from './../models/profile';
 import { RootStore } from './rootStore';
 import { toast } from 'react-toastify';
+import { totalmem } from 'os';
 
 export default class ProfileStore {
   rootStore: RootStore;
@@ -14,6 +15,7 @@ export default class ProfileStore {
   @observable loadingProfile = false;
   @observable uploadingPhoto = false;
   @observable loading = false;
+  @observable editting = false;
 
   @computed get isCurrentUser() {
     if (this.rootStore.userStore.user && this.profile) {
@@ -89,7 +91,7 @@ export default class ProfileStore {
     try {
       await agent.Profiles.deletePhoto(photo.id);
       runInAction(() => {
-        if (this.profile ) {
+        if (this.profile) {
           this.profile.photos = this.profile.photos.filter(
             (p) => p.id !== photo.id
           );
@@ -101,6 +103,28 @@ export default class ProfileStore {
       toast.error('Error deleting photo');
       runInAction(() => {
         this.loading = false;
+      });
+    }
+  };
+
+  @action editProfile = async (profile: IEditProfile) => {
+    this.editting = true;
+    try {
+      await agent.Profiles.editProfile(profile);
+      runInAction(() => {
+        if (profile.displayName !== this.rootStore.userStore.user?.displayName) {
+            this.rootStore.userStore.user!.displayName = profile.displayName!;
+        }
+        if (this.profile) {
+            this.profile = {...this.profile, ...profile};
+        }
+        this.editting = false;
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('Error editting profile');
+      runInAction(() => {
+        this.editting = false;
       });
     }
   };
