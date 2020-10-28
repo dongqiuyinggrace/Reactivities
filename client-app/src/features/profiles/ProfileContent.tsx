@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tab, TabPane } from 'semantic-ui-react';
 import ProfilePhotos from './ProfilePhotos';
-import { IProfile } from './../../app/models/profile';
 import ProfileDescription from './ProfileDescription';
 import { observer } from 'mobx-react-lite';
 

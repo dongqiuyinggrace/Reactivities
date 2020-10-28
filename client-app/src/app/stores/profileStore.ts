@@ -3,7 +3,6 @@ import agent from '../api/agent';
 import { IPhoto, IProfile, IEditProfile } from './../models/profile';
 import { RootStore } from './rootStore';
 import { toast } from 'react-toastify';
-import { totalmem } from 'os';
 
 export default class ProfileStore {
   rootStore: RootStore;

@@ -9,6 +9,16 @@ export interface IActivity {
     isGoing: boolean;
     isHost: boolean;
     attendees: IAttendee[];
+    comments: IComment[];
+}
+
+export interface IComment {
+    id: string;
+    body: string;
+    createdAt: Date;
+    displayName: string;
+    userName: string;
+    image: string;
 }
 
 export interface IAttendee {

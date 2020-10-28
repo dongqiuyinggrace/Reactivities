@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Field, Form as FinalForm } from 'react-final-form';
-import { composeValidators, isRequired, combineValidators } from 'revalidate';
+import { isRequired, combineValidators } from 'revalidate';
 import { Button, Form } from 'semantic-ui-react';
 import TextInput from './../../app/common/form/TextInput';
 import { observer } from 'mobx-react-lite';

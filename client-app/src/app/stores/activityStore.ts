@@ -7,6 +7,11 @@ import { toast } from 'react-toastify';
 import { RootStore } from './rootStore';
 import { setActivityProperties } from '../common/util/util';
 import { createAttendee } from './../common/util/util';
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  LogLevel,
+} from '@microsoft/signalr';
 
 configure({ enforceActions: 'always' });
 
@@ -25,6 +30,54 @@ class ActivityStore {
   @observable target = '';
   @observable hostName = '';
   @observable loading = false;
+  @observable.ref hubConnection: HubConnection | null = null;
+
+  @action createHubConnection = (id: string) => {
+    this.hubConnection = new HubConnectionBuilder()
+      .withUrl('http://localhost:5000/chat', {
+        accessTokenFactory: () => this.rootStore.commonStore.token!,
+      })
+      .configureLogging(LogLevel.Information)
+      .build();
+
+    this.hubConnection
+      .start()
+      .then(() => console.log(this.hubConnection?.state))
+      .then(() => {
+        console.log('Attempting to join the group');
+        this.hubConnection?.invoke('AddToGroup', id);
+      })
+      .catch((error) => console.log('Error establishing connection', error));
+
+    this.hubConnection.on('ReceiveComment', (comment) => {
+      runInAction(() => {
+        this.activity!.comments.push(comment);
+      });
+    });
+
+    this.hubConnection.on('Send', (message) => {
+      toast.info(message);
+    });
+  };
+
+  @action stopHubConnection = () => {
+    this.hubConnection
+      ?.invoke('RemoveFromGroup', this.activity!.id)
+      .then(() => {
+        this.hubConnection?.stop();
+      })
+      .then(() => console.log('Connection stopped'))
+      .catch((err) => console.log(err));
+  };
+
+  @action addComment = async (values: any) => {
+    values.activityId = this.activity?.id;
+    try {
+      await this.hubConnection?.invoke('SendComment', values);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   @computed get activitiesByDate() {
     return this.groupActivities(Array.from(this.activityRegistry.values()));
@@ -110,6 +163,7 @@ class ActivityStore {
       const attendee = createAttendee(this.rootStore.userStore.user!);
       attendee.isHost = true;
       const attendees = [];
+      activity.comments = [];
       attendees.push(attendee);
       activity.attendees = attendees;
       activity.isHost = true;
