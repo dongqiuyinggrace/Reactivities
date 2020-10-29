@@ -3,6 +3,7 @@ import { Tab, TabPane } from 'semantic-ui-react';
 import ProfilePhotos from './ProfilePhotos';
 import ProfileDescription from './ProfileDescription';
 import { observer } from 'mobx-react-lite';
+import ProfileFollowings from './ProfileFollowings';
 
 const panes = [
   { menuItem: 'About', render: () => <ProfileDescription /> },
@@ -11,22 +12,21 @@ const panes = [
     menuItem: 'Activities',
     render: () => <TabPane>Activities content</TabPane>,
   },
-  {
-    menuItem: 'Followers',
-    render: () => <TabPane>Followers content</TabPane>,
-  },
-  {
-    menuItem: 'Following',
-    render: () => <TabPane>Following content</TabPane>,
-  },
+  { menuItem: 'Followers', render: () => <ProfileFollowings />},
+  { menuItem: 'Following', render: () => <ProfileFollowings />},
 ];
 
-const ProfileContent = () => {
+interface IProps {
+  setActiveTab: (activeIndex: any) => void;
+} 
+
+const ProfileContent: React.FC<IProps> = ({setActiveTab}) => {
   return (
     <Tab
       menu={{ fluid: true, vertical: true }}
       menuPosition='right'
       panes={panes}
+      onTabChange={(e, data) => setActiveTab(data.activeIndex)}
     />
   );
 };
