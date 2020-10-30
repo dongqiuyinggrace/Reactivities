@@ -1,6 +1,11 @@
 import { action, computed, observable, runInAction, reaction } from 'mobx';
 import agent from '../api/agent';
-import { IPhoto, IProfile, IEditProfile } from './../models/profile';
+import {
+  IPhoto,
+  IProfile,
+  IEditProfile,
+  IUserActivity,
+} from './../models/profile';
 import { RootStore } from './rootStore';
 import { toast } from 'react-toastify';
 
@@ -10,15 +15,16 @@ export default class ProfileStore {
     this.rootStore = rootStore;
 
     reaction(
-      () => this.activeTab, 
-      activeTab => {
+      () => this.activeTab,
+      (activeTab) => {
         if (activeTab === 3 || activeTab === 4) {
           const predicate = activeTab === 3 ? 'followers' : 'following';
           this.loadFollowings(predicate);
         } else {
           this.followings = [];
         }
-      });
+      }
+    );
   }
 
   @observable profile: IProfile | null = null;
@@ -28,6 +34,8 @@ export default class ProfileStore {
   @observable editting = false;
   @observable followings: IProfile[] = [];
   @observable activeTab: number = 0;
+  @observable userActivities: IUserActivity[] = [];
+  @observable loadingActivities = false;
 
   @computed get isCurrentUser() {
     if (this.rootStore.userStore.user && this.profile) {
@@ -199,6 +207,26 @@ export default class ProfileStore {
       toast.error('Problem loading followings');
       runInAction(() => {
         this.loading = false;
+      });
+    }
+  };
+
+  @action loadUserActivities = async (userName: string, predicate?: string) => {
+    this.loadingActivities = true;
+    try {
+      const userActivities = await agent.Profiles.listActivities(
+        userName,
+        predicate
+      );
+      runInAction(() => {
+        this.userActivities = userActivities;
+        this.loadingActivities = false;
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('Problem loading userActivities');
+      runInAction(() => {
+        this.loadingActivities = false;
       });
     }
   };

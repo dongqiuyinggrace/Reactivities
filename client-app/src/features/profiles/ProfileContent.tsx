@@ -1,16 +1,17 @@
 import React from 'react';
-import { Tab, TabPane } from 'semantic-ui-react';
+import { Tab } from 'semantic-ui-react';
 import ProfilePhotos from './ProfilePhotos';
 import ProfileDescription from './ProfileDescription';
 import { observer } from 'mobx-react-lite';
 import ProfileFollowings from './ProfileFollowings';
+import ProfileActivities from './ProfileActivities';
 
 const panes = [
   { menuItem: 'About', render: () => <ProfileDescription /> },
   { menuItem: 'Photos', render: () => <ProfilePhotos /> },
   {
     menuItem: 'Activities',
-    render: () => <TabPane>Activities content</TabPane>,
+    render: () => <ProfileActivities />,
   },
   { menuItem: 'Followers', render: () => <ProfileFollowings />},
   { menuItem: 'Following', render: () => <ProfileFollowings />},

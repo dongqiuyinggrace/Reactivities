@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Application.Interfaces;
 using AutoMapper;
 using Domain;
 using MediatR;
@@ -9,27 +12,73 @@ using Persistence;
 
 namespace Application.Activities
 {
+    public class ActivityEnvelop
+    {
+        public List<ActivityDto> Activities { get; set; }
+        public int ActivityCount { get; set; }
+    }
+
     public class List
     {
-        public class Query : IRequest<List<ActivityDto>> { }
+        public class Query : IRequest<ActivityEnvelop>
+        {
+            public Query(int? limit, int? offset, bool isGoing, bool isHost, DateTime? startDate)
+            {
+                Limit = limit;
+                Offset = offset;
+                IsGoing = isGoing;
+                IsHost = isHost;
+                StartDate = startDate ?? DateTime.Now;
+            }
+            public int? Limit { get; set; }
+            public int? Offset { get; set; }
+            public bool IsGoing { get; set; }
+            public bool IsHost { get; set; }
+            public DateTime? StartDate { get; set; }
+        }
 
-        public class Handler : IRequestHandler<Query, List<ActivityDto>>
+        public class Handler : IRequestHandler<Query, ActivityEnvelop>
         {
             private readonly DataContext _context;
             private readonly IMapper _mapper;
+            private readonly IUserAccessor _userAccessor;
 
-            public Handler(DataContext context, IMapper mapper)
+            public Handler(DataContext context, IMapper mapper, IUserAccessor userAccessor)
             {
                 _context = context;
                 _mapper = mapper;
+                _userAccessor = userAccessor;
             }
-            public async Task<List<ActivityDto>> Handle(Query request,
+            public async Task<ActivityEnvelop> Handle(Query request,
                 CancellationToken cancellationToken)
             {
-                var activities = await _context.Activities
+                var queryable = _context.Activities
+                    .Where(a => a.Date >= request.StartDate)
+                    .OrderBy(a => a.Date)
+                    .AsQueryable();
+
+                if (request.IsGoing && !request.IsHost)
+                {
+                    queryable = queryable.Where(x => x.UserActivities.Any(
+                        a => a.AppUser.UserName == _userAccessor.GetCurrentUserName()));
+                }
+
+                if (request.IsHost && !request.IsGoing)
+                {
+                    queryable = queryable.Where(x => x.UserActivities.Any(
+                        a => a.AppUser.UserName == _userAccessor.GetCurrentUserName() && a.IsHost));
+                }
+
+                var activities = await queryable
+                    .Skip(request.Offset ?? 0)
+                    .Take(request.Limit ?? 3)
                     .ToListAsync();
 
-                return _mapper.Map<List<Activity>, List<ActivityDto>>(activities);
+                return new ActivityEnvelop
+                {
+                    Activities = _mapper.Map<List<Activity>, List<ActivityDto>>(activities),
+                    ActivityCount = queryable.Count()
+                };
             }
         }
     }
